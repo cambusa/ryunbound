@@ -1,0 +1,97 @@
+/****************************************************************************
+* Name:            ryque.css                                                *
+* Project:         Cambusa/ryQue                                            *
+* Version:         1.69                                                     *
+* Description:     Lightweight access to databases                          *
+* Copyright (C):   2015  Rodolfo Calzetti                                   *
+*                  License GNU LESSER GENERAL PUBLIC LICENSE Version 3      *
+* Contact:         https://github.com/cambusa                               *
+*                  postmaster@rudyz.net                                     *
+****************************************************************************/
+.ryque-row-even {
+background-color: #FFFFFF;
+color:#000000;
+}
+
+.ryque-row-odd {
+background-color: #F2F9FF;
+color:#000000;
+}
+
+.ryque-row-selected {
+color:#000000;
+/* Blue */
+background-color:#C8DAE8;
+background-image:-webkit-gradient(linear, left top, left bottom, from(#DAE6F0), to(#A2C0DA));
+background-image:-webkit-linear-gradient(top, #DAE6F0, #A2C0DA);
+background-image:-moz-linear-gradient(top, #DAE6F0, #A2C0DA);
+background-image:-o-linear-gradient(top, #DAE6F0, #A2C0DA);
+background:-ms-linear-gradient(top, #DAE6F0 0%, #A2C0DA 100%); /* IE10+ */
+background-image:linear-gradient(to bottom, #DAE6F0, #A2C0DA);
+filter:progid:DXImageTransform.Microsoft.gradient( startColorstr='#DAE6F0', endColorstr='#A2C0DA',GradientType=0 ); /* IE6-9 */
+}
+
+.ryque-row-checked {
+color:#FFFFFF;
+/* Blue */
+background-color:#588EBC;
+}
+
+.ryque-cell{
+top:0px;
+line-height:21px;
+padding:0px 6px;
+box-sizing:border-box;
+}
+
+.ryque-focusin {
+/* Blue */
+background-color:#3F75A2;
+}
+
+.ryque-focusout {
+background-color:#E0E0E0;
+}
+
+.ryque div{
+cursor:default;
+}
+
+.ryque a{
+outline-style:none;
+}
+
+.ryque div::selection{
+background:transparent;
+}
+
+.ryque div::-moz-selection{
+background:transparent;
+}
+
+.ryque div::-webkit-selection{
+background:transparent;
+}
+
+.ryque a::selection{
+background:transparent;
+}
+
+.ryque a::-moz-selection{
+background:transparent;
+}
+
+.ryque a::-webkit-selection{
+background:transparent;
+}
+
+.ryque input{
+position:absolute;
+font-size:2px;
+right:4px;
+top:6px;
+width:1px;
+height:1px;
+border:none;
+text-indent:-10px;
+}
