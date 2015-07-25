@@ -6,7 +6,7 @@
 
 <link type='text/css' href='ryque.css' rel='stylesheet' />
 <style>
-input,select,a:focus{outline:none;border:none;}
+a{text-decoration:none;}
 .contextMenu{position:absolute;display:none;}
 .contextMenu>ul>li{font-family:verdana;font-size:12px;text-align:left;}
 .contextMenu>ul>li>a{color:black;}
@@ -23,9 +23,7 @@ input,select,a:focus{outline:none;border:none;}
 <script type='text/javascript' src='js/jquery.ui.position.js' ></script>
 <script type='text/javascript' src='js/jquery.cookie.js' ></script>
 <script type='text/javascript' src='js/jquery.ui.contextmenu.js' ></script>
-<script type='text/javascript' src='js/jquery.desktop.ry.js' ></script>
 <script type='text/javascript' src='js/rygeneral.js' ></script>
-<script type='text/javascript' src='js/rybox.js' ></script>
 <script type='text/javascript' src='ryunbound.js' ></script>
 
 <script language="JavaScript">
@@ -33,9 +31,6 @@ input,select,a:focus{outline:none;border:none;}
 var Obj;
 
 function init(){
-
-    // for stand-alone uses (without Cambusa framework)
-    _systeminfo.relative.cambusa="";
 
     Obj=$("#gotha").ryunbound({
         left:50,
@@ -107,6 +102,30 @@ function init(){
     
     Obj.setmatrix(v);
     Obj.autofit();
+
+    $("#gotha").contextMenu("popup", {
+        menuStyle:{
+            width:"200px"
+        },
+        bindings: {
+            'open': function(t) {
+                alert("Open");
+            },
+            'delete': function(t) {
+                Obj.remove( Obj.index() );
+            }
+        },
+        onContextMenu:
+            function(e) {
+            
+                return true;
+            },
+        onShowMenu: 
+            function(e, menu) {
+            
+                return menu;
+            }
+    });
     
 }
 
@@ -120,6 +139,13 @@ function init(){
 <div id="mess" style="position:absolute;left:50px;top:100px;color:#1B82E6;font-size:80%;"></div>
 
 <div id="gotha" class="window_main"></div>
+
+<div id='popup' class='contextMenu'>
+    <ul>
+        <li id='open'><a href='javascript:'>Open</a></li>
+        <li id='delete'><a href='javascript:'>Delete</a></li>
+    </ul>
+</div>
 
 </body>
 </html>
