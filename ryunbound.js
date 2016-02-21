@@ -710,7 +710,7 @@
                         }
                     }
                     if(settings.before!=missing){
-                        settings.before(propobj, v);
+                        settings.before(propobj, v, proprows);
                     }
                     for(c=1; c<=propcols.length; c++){
                         if($.isNumeric(proptyps[c-1])){
@@ -1355,9 +1355,6 @@
             this.columns=function(){
                 return propcols.length;
             }
-            this.selection=function(){
-                return propselection;
-            }
             this.tipactivate=function(){
                 propscrolling=true;
                 $("#"+propname+"_tooltip").css({"visibility":"visible","left":-2,"top":4});
@@ -1493,6 +1490,14 @@
                 }
                 return v;
             }
+            this.getrow=function(r){
+                return this.matrix.slice(r-1, r)[0];
+            }
+            this.relocate=function(from, to){
+                var f=this.getrow(from);
+                this.remove(from);
+                this.insert(f, to);
+            }
             this.insert=function(d, r){
                 if(r==missing)
                     r=propindex;
@@ -1533,6 +1538,9 @@
                         sels[s+1]=true;
                 }
                 propobj.setmatrix(propobj.matrix, false, propindex, sels);
+            }
+            this.rows=function(){
+                return proprows;
             }
             // CHIAMATA ALLA GENERAZIONE EFFETTIVA
             try{this.create();}catch(e){}

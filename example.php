@@ -60,15 +60,17 @@ function init(){
         ready:function(o,q){
             $("#mess").html("count: "+o.count());
         },
-        before:function(o, d){
+        before:function(o, d, r){
             var id=o.colbyname("DECIMAL");
+            // The original style recovery
+            for(var i=0; i<r; i++){
+                $( o.screencell(i, id) ).css({"background":"transparent"});
+            }
+            // Overwritten with the new style
             for(var i in d){
                 if(d[i]["DECIMAL"].actualNumber()<0){
                     $( o.screencell(i, id) ).css({"background":"#F8D0D8"});
                     d[i]["STRING"]=d[i]["STRING"].toUpperCase();
-                }
-                else{
-                    $( o.screencell(i, id) ).css({"background":"transparent"});
                 }
             }
         }
@@ -102,7 +104,7 @@ function init(){
     
     Obj.setmatrix(v);
     Obj.autofit();
-
+    
     $("#gotha").contextMenu("popup", {
         menuStyle:{
             width:"200px"
