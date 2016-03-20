@@ -24,6 +24,7 @@
             var propinit=false;
             var propusedparams=false;
             var propenabled=true;
+            var propautocoding=false;
             
             var propcols=[];
             var proptits=[];
@@ -58,6 +59,8 @@
             var propordcol2=-1;
             var propordasc2=true;
             var propsortable=true;
+            var propeditmode=false;
+            var propcolumn=0;
             
             var proppageon=0;
             var proploadon=false;
@@ -104,6 +107,8 @@
             if(settings.numbered!=missing){setnumbered(settings.numbered)}
             if(settings.checkable!=missing){setcheckable(settings.checkable)}
             if(settings.sortable!=missing){propsortable=settings.sortable.actualBoolean()}
+            if(settings.editmode!=missing){propeditmode=settings.editmode.actualBoolean()}
+            if(settings.autocoding!=missing){propautocoding=settings.autocoding.actualBoolean()}
             if(settings.columns!=missing){
                 var cols=settings.columns;
                 var w=propscrollsize+5;
@@ -139,12 +144,16 @@
                 t+="<div id='"+propname+"_rect' class='ryque-rect'><a style='cursor:default;line-height:20px;font-size:20px;'>&nbsp;&nbsp;</a></div>";  // prolungamento dell'header sopra vscroll
                 t+="<div id='"+propname+"_vscroll'>"; // Scroll verticale
                     t+="<div id='"+propname+"_tooltip'>0-0</div><div id='"+propname+"_vtrack' class='ryque-vtrack'></div>";
+                    t+="<div class='ryque-pageup'></div>";  // page up
+                    t+="<div class='ryque-pagedown'></div>";  // page down
                 t+="</div>";
                 if($.browser.mobile){
                     t+="<div id='"+propname+"_mobivertback'></div><div id='"+propname+"_mobivertfore'></div>";
                 }
                 t+="<div id='"+propname+"_hscroll'>"; // Scroll orizzontale
                     t+="<div id='"+propname+"_htrack' class='ryque-htrack'></div>";
+                    t+="<div class='ryque-pageleft'></div>";  // page left
+                    t+="<div class='ryque-pageright'></div>";  // page right
                 t+="</div>";
                 if($.browser.mobile){
                     t+="<div id='"+propname+"_mobihoriback'></div><div id='"+propname+"_mobihorifore'></div>";
@@ -233,7 +242,76 @@
                         case 39:if(propctrl){propobj.rowend()}else{propobj.rowright()}break;
                         case 37:if(propctrl){propobj.rowhome()}else{propobj.rowleft()}break;
                         case 32:propobj.seltoggle(0);break;
-                        case 13:if(settings.enter!=missing){settings.enter(propobj,propindex)}break;
+                        case 13:
+                            if(propeditmode && propctrl){
+                                if(settings.edit!=missing){
+                                    var p0=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).position();
+                                    var p1=$( "#"+propname+"_tr"+(propindex-proptoprow+1) ).position();
+                                    var p2=$( "#"+propname+"_grid" ).position();
+                                    var p3=$( "#"+propname+"_outgrid" ).position();
+                                    var id=propcols[propcolumn-1];
+                                    var t=proptyps[propcolumn-1];
+                                    var w=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).width()+12;
+                                    var l=propleft+p0.left+p1.left+p2.left+p3.left;
+                                    if(w<100)
+                                        w=100;
+                                    var info={
+                                        id:id, 
+                                        row:propindex, 
+                                        col:propcolumn, 
+                                        width:w, 
+                                        height:proprowh, 
+                                        left:l, 
+                                        top:proptop+p0.top+p1.top+p2.top+p3.top, 
+                                        type:t, 
+                                        value:__(propobj.matrix[propindex-1][id]),
+                                        editor:false
+                                    };
+                                    settings.edit(propobj, info);
+                                    if(info.editor){
+                                        // Metodi in uscita
+                                        info.back=function(v){
+                                            if(v==missing){
+                                                if(info.editor.type=="list")
+                                                    v=info.editor.key();
+                                                else
+                                                    v=info.editor.value();
+                                                if(v==null)
+                                                    v="";
+                                            }
+                                            propobj.cells(propindex, id, v);
+                                            propobj.refresh();
+                                            propobj.focus();
+                                        };
+                                        info.abandon=function(){
+                                            info.editor.visible(0);
+                                            propobj.focus();
+                                        };
+                                        // Posizionamento dell'editor
+                                        if(info.editor.type=="check")
+                                            info.left+=Math.floor(info.width/2)-9;
+                                        info.editor.move({"left":info.left, "top":info.top, "width":info.width});
+                                        // Valorizzazione dell'editor
+                                        if(info.editor.type=="list")
+                                            info.editor.setkey(info.value);
+                                        else
+                                            info.editor.value(info.value);
+                                        // Eventuale disabilitazione dell'helper
+                                        if(info.editor.type.match(/^(date|number|code)$/))
+                                            info.editor.helper(0);
+                                        // Se l'editor è numerico, disabilito l'incremento mediante frecce
+                                        if(info.editor.type=="number")
+                                            info.editor.incremental(0);
+                                        // Show e focus
+                                        info.editor.visible(1);
+                                        info.editor.focus();
+                                    }
+                                }
+                            }
+                            else if(settings.enter!=missing){
+                                settings.enter(propobj, propindex);
+                            }
+                            break;
                         case 46:    // CTRL-DEL: cancello la selezione
                             if(propctrl){
                                 propsels={};
@@ -338,20 +416,27 @@
                         propobj.dataload();
                 	}
                 });
-                $("#"+propname+"_vscroll").mousedown(
+                $("#"+propname+"_vscroll").mouseover(
                     function(evt){
-                        if(!propenabled){return}
-                        if(propcount>proprows){
-                            var h=$("#"+propname+"_vtrack").offset().top;
-                            if (evt.pageY>h+proptracksize){
-                                propobj.pagedown(1);
-                                propobj.dataload();
-                            }
-                            else if (evt.pageY<h){
-                                propobj.pageup(1);
-                                propobj.dataload();
-                            }
-                        }
+                        if(propcount>proprows)
+                            $("#"+propname+"_vscroll .ryque-pageup,.ryque-pagedown").show();
+                    }
+                );
+                $("#"+propname+"_vscroll").mouseout(
+                    function(evt){
+                        $("#"+propname+"_vscroll .ryque-pageup,.ryque-pagedown").hide();
+                    }
+                );
+                $("#"+propname+"_vscroll .ryque-pageup").click(
+                    function(evt){
+                        propobj.pageup(1);
+                        propobj.dataload();
+                    }
+                );
+                $("#"+propname+"_vscroll .ryque-pagedown").click(
+                    function(evt){
+                        propobj.pagedown(1);
+                        propobj.dataload();
                     }
                 );
                 $("#"+propname+"_htrack").draggable({
@@ -375,21 +460,30 @@
                         propscrolling=false;
                 	}
                 });
-
-                draggablecolumns();
-
-                $("#"+propname+"_hscroll").mousedown(
+                $("#"+propname+"_hscroll").mouseover(
                     function(evt){
-                        if(!propenabled){return}
-                        if(propgridwidth>propwinwidth){
-                            var w=$("#"+propname+"_htrack").offset().left;
-                            if (evt.pageX>w+proptracksize)
-                                propobj.rowright();
-                            else if (evt.pageX<w)
-                                propobj.rowleft();
-                        }
+                        if(propgridwidth>propwinwidth && !propeditmode)
+                            $("#"+propname+"_hscroll .ryque-pageleft,.ryque-pageright").show();
                     }
                 );
+                $("#"+propname+"_hscroll").mouseout(
+                    function(evt){
+                        $("#"+propname+"_hscroll .ryque-pageleft,.ryque-pageright").hide();
+                    }
+                );
+                $("#"+propname+"_hscroll .ryque-pageleft").click(
+                    function(evt){
+                        propobj.rowleft();
+                    }
+                );
+                $("#"+propname+"_hscroll .ryque-pageright").click(
+                    function(evt){
+                        propobj.rowright();
+                    }
+                );
+
+                draggablecolumns();
+                
                 if($.browser.mobile){
                     $("#"+propname+"_mobivertback").mousedown(
                         function(evt){
@@ -458,6 +552,11 @@
                                 if(c!=0){
                                     if(reff!=propindex)
                                         propobj.index(reff);
+                                    if(propeditmode){
+                                        resetcells();
+                                        propcolumn=c;
+                                        activecell();
+                                    }
                                 }
                                 else if(c==0 && propcheckable){
                                     propobj.seltoggle(reff);
@@ -1012,33 +1111,61 @@
                 }
             }
             this.rowright=function(){
-                propleftcol+=50;
-                if(propleftcol>propgridwidth-propwinwidth)
-                    propleftcol=propgridwidth-propwinwidth;
-                $("#"+propname+"_grid")
-                    .css({"left":-propleftcol});
-                propobj.hscrefresh();
+                if(propeditmode){
+                    if(propcolumn<propcols.length){
+                        resetcells();
+                        propcolumn+=1;
+                        activecell();
+                    }
+                }
+                else{
+                    propleftcol+=50;
+                    if(propleftcol>propgridwidth-propwinwidth)
+                        propleftcol=propgridwidth-propwinwidth;
+                    $("#"+propname+"_grid").css({"left":-propleftcol});
+                    propobj.hscrefresh();
+                }
             }
             this.rowleft=function(){
-                propleftcol-=50;
-                if(propleftcol<0)
-                    propleftcol=0;
-                $("#"+propname+"_grid")
-                    .css({"left":-propleftcol});
-                propobj.hscrefresh();
+                if(propeditmode){
+                    if(propcolumn>1){
+                        resetcells();
+                        propcolumn-=1;
+                        activecell();
+                    }
+                }
+                else{
+                    propleftcol-=50;
+                    if(propleftcol<0)
+                        propleftcol=0;
+                    $("#"+propname+"_grid").css({"left":-propleftcol});
+                    propobj.hscrefresh();
+                }
             }
             this.rowhome=function(){
+                if(propeditmode){
+                    if(propcolumn>1){
+                        resetcells();
+                        propcolumn=1;
+                        activecell();
+                    }
+                }
                 propleftcol=0;
-                $("#"+propname+"_grid")
-                    .css({"left":-propleftcol});
+                $("#"+propname+"_grid").css({"left":-propleftcol});
                 propobj.hscrefresh();
             }
             this.rowend=function(){
+                if(propeditmode){
+                    if(propcolumn<propcols.length){
+                        resetcells();
+                        propcolumn=propcols.length;
+                        activecell();
+                    }
+                }
                 propleftcol=propgridwidth-propwinwidth;
                 if(propleftcol<0)
                     propleftcol=0;
-                $("#"+propname+"_grid")
-                    .css({"left":-propleftcol});
+                $("#"+propname+"_grid").css({"left":-propleftcol});
                 propobj.hscrefresh();
             }
             this.vscrefresh=function(){
@@ -1128,9 +1255,10 @@
             }
             this.rowdecor=function(gr,f){
                 var reff=proptoprow+gr-1;
+                var fd;
                 if(propfirstcol){
-                    var fd="#"+propname+"_zr"+gr;
                     var s=false;
+                    fd="#"+propname+"_zr"+gr;
                     $(fd).removeClass("ryque-row-even ryque-row-odd ryque-row-selected ryque-row-checked");
                     if(propcheckable && reff<=propcount && f){
                         if((reff in propsels)!=propselinvert){
@@ -1152,16 +1280,34 @@
                 }
                 // Selettore
                 fd="#"+propname+"_tr"+gr;
-                $(fd).removeClass("ryque-row-even ryque-row-odd ryque-row-selected ryque-row-checked");
+                $(fd).removeClass("ryque-row-even ryque-row-odd ryque-row-selected ryque-row-checked-even ryque-row-checked-odd");
                 if(reff==propindex && f){
                     $(fd).addClass("ryque-row-selected");
-                    
                 }
                 else{
-                    if((gr%2)==0)
-                        $(fd).addClass("ryque-row-even");
+                    var s=false;
+                    if(propcheckable && reff<=propcount && f){
+                        if((reff in propsels)!=propselinvert){
+                            s=true;
+                            if((gr%2)==0)
+                                $(fd).addClass("ryque-row-checked-even");
+                            else
+                                $(fd).addClass("ryque-row-checked-odd");
+                        }
+                    }
+                    if(!s){
+                        if((gr%2)==0)
+                            $(fd).addClass("ryque-row-even");
+                        else
+                            $(fd).addClass("ryque-row-odd");
+                    }
+                }
+                if(propeditmode){
+                    var c="#"+propname+"_"+gr+"_"+propcolumn;
+                    if(reff==propindex && propcolumn>0)
+                        $(c).addClass("ryque-active-cell");
                     else
-                        $(fd).addClass("ryque-row-odd");
+                        $(c).removeClass("ryque-active-cell");
                 }
             }
             this.selrefresh=function(){
@@ -1358,6 +1504,7 @@
             this.tipactivate=function(){
                 propscrolling=true;
                 $("#"+propname+"_tooltip").css({"visibility":"visible","left":-2,"top":4});
+                $("#"+propname+"_vscroll .ryque-pageup,.ryque-pagedown").hide();
             }
             this.tipmove=function(c){
                 var p=$("#"+propname+"_vtrack").position().top;
@@ -1542,8 +1689,19 @@
             this.rows=function(){
                 return proprows;
             }
+			this.editmode=function(v){
+				if(v!=missing)
+					propeditmode=v.actualBoolean();
+                return propeditmode;
+			}
+            this.focus=function(){
+                if(RYBOX)
+                    castFocus(propname);
+                else
+                    document.getElementById(propname+"_anchor").focus();
+            }
             // CHIAMATA ALLA GENERAZIONE EFFETTIVA
-            try{this.create();}catch(e){}
+            try{ this.create() }catch(e){ if(window.console){console.log(e.message)} }
             try{if(RYBOX){RYBOX.addobject(propobj);}}catch(e){}  // Lo aggiungo a RYBOX per il multilingua
 
             // FUNZIONI PRIVATE
@@ -1610,6 +1768,7 @@
             }
             function setstyle(){
                 $("#"+propname)
+                    .addClass("ryobject")
                     .addClass("ryque")
                     .width(propwidth)
                     .height(proprowh*(proprows+1)+propscrollsize+2)
@@ -1800,7 +1959,10 @@
                 if(params.width!=missing){dim=params.width}
                 if(params.type!=missing){typ=params.type}
                 if(params.formula!=missing){form=params.formula}
-                if(params.code!=missing){code=params.code}
+                if(params.code!=missing)
+                    code=params.code;
+                else if(propautocoding && tit!="")
+                    code="COL_"+tit.replace(/[^\w]/ig, "").toUpperCase().substr(0,50);
                 if (0<dim && dim<10)
                     dim=10;
                 propcols[l]=colid;
@@ -2205,6 +2367,49 @@
                             }
                         }
                     }
+                }
+            }
+            function resetcells(){
+                if(propcolumn>0){
+                    for(var r=1; r<=proprows; r++){
+                        var c="#"+propname+"_"+r+"_"+propcolumn;
+                        $(c).removeClass("ryque-active-cell");
+                    }
+                }
+            }
+            function activecell(){
+                if(propcolumn>0)
+                    $( c="#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).addClass("ryque-active-cell");
+                // Gestione scroll orizzontale
+                var cng=false;
+                if(propcolumn==1){
+                    if(propleftcol>0){
+                        propleftcol=0;
+                        cng=true;
+                    }
+                }
+                else if(propcolumn==propcols.length){
+                    if(propleftcol<propgridwidth-propwinwidth){
+                        propleftcol=propgridwidth-propwinwidth;
+                        cng=true;
+                    }
+                }
+                else{
+                    var offset=-propleftcol;
+                    for(var i=0; i<propcolumn-1; i++)
+                        offset+=propdims[i];
+                    if(offset<0){
+                        propleftcol-=Math.abs(offset);
+                        cng=true;
+                    }
+                    else if(offset+propdims[propcolumn-1]>propwinwidth){
+                        propleftcol+=(offset+propdims[propcolumn-1]-propwinwidth);
+                        cng=true;
+                    }
+                }
+                if(cng){
+                    $("#"+propname+"_grid").css({"left":-propleftcol});
+                    propobj.hscrefresh();
                 }
             }
 			return this;
