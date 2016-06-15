@@ -1,7 +1,7 @@
-ryUnbound v1.70
-===============
+ryUnbound v2.0
+==============
 
-### © 2015 Rodolfo Calzetti
+### Â© 2015 Rodolfo Calzetti
 
 __JS Multicolumn listbox__
 
