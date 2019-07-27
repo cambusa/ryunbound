@@ -30,7 +30,6 @@
             var proptits=[];
             var propdims=[];
             var proptyps=[];
-            var propfrms=[];
             var propcodes=[];
             
             var propsels={};
@@ -135,7 +134,7 @@
             // FUNZIONI PUBBLICHE
             this.create=function(){
                 //var t="<a id='"+propname+"_anchor' href='javascript:'></a>";
-                var t="<input type='text' id='"+propname+"_anchor'>";
+                var t="<input type='button' id='"+propname+"_anchor'>";
                 
                 t+=createzero();
                 t+="<div id='"+propname+"_outgrid'>"; // Outer Griglia
@@ -162,21 +161,24 @@
                 t+="<div id='"+propname+"_lborder'></div>"; // bordo sinistro
                 t+="<span id='"+propname+"_textwidth'></span>"; // elemento invisibile per valutare la larghezza dei testi
                 
-                $("#"+propname).html(t);
+                $("#"+propname).html(t)
+				.addClass("ryque-border");				
                 setstyle();
                 propobj.hscrefresh();
                 statistics();
 
                 $("#"+propname+"_anchor").focus(
                     function(){
-                        $("#"+propname+"_lborder").removeClass("ryque-focusout");
-                        $("#"+propname+"_lborder").addClass("ryque-focusin");
+                        //$("#"+propname+"_lborder").removeClass("ryque-focusout");
+                        //$("#"+propname+"_lborder").addClass("ryque-focusin");
+						$("#"+propname).addClass("ryque-focus");
                     }
                 );
                 $("#"+propname+"_anchor").focusout(
                     function(){
-                        $("#"+propname+"_lborder").removeClass("ryque-focusin");
-                        $("#"+propname+"_lborder").addClass("ryque-focusout");
+                        //$("#"+propname+"_lborder").removeClass("ryque-focusin");
+                        //$("#"+propname+"_lborder").addClass("ryque-focusout");
+						$("#"+propname).removeClass("ryque-focus");
                     }
                 );
                 $("#"+propname+"_anchor").keydown(
@@ -218,9 +220,16 @@
                             break;
                         case 40:
                             if(propshift){
-                                selectrow(propindex, true);
-                                propobj.rowdown();
-                                selectrow(propindex, true);
+                                if(propctrl){
+                                    selectrow(propindex, true, false);
+                                    propobj.rowdown();
+                                    selectrow(propindex, true, false);
+                                }
+                                else{
+                                    selectrow(propindex, true);
+                                    propobj.rowdown();
+                                    selectrow(propindex, true);
+                                }
                             }
                             else if(propctrl){
                                 propobj.index(proptoprow+proprows-1)
@@ -230,9 +239,16 @@
                             break;
                         case 38:
                             if(propshift){
-                                selectrow(propindex, true);
-                                propobj.rowup();
-                                selectrow(propindex, true);
+                                if(propctrl){
+                                    selectrow(propindex, true, false);
+                                    propobj.rowup();
+                                    selectrow(propindex, true, false);
+                                }
+                                else{
+                                    selectrow(propindex, true);
+                                    propobj.rowup();
+                                    selectrow(propindex, true);
+                                }
                             }
                             else if(propctrl)
                                 propobj.index(proptoprow);
@@ -244,70 +260,7 @@
                         case 32:propobj.seltoggle(0);break;
                         case 13:
                             if(propeditmode && propctrl){
-                                if(settings.edit!=missing){
-                                    var p0=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).position();
-                                    var p1=$( "#"+propname+"_tr"+(propindex-proptoprow+1) ).position();
-                                    var p2=$( "#"+propname+"_grid" ).position();
-                                    var p3=$( "#"+propname+"_outgrid" ).position();
-                                    var id=propcols[propcolumn-1];
-                                    var t=proptyps[propcolumn-1];
-                                    var worig=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).width();
-                                    var w=worig+12;
-                                    var l=propleft+p0.left+p1.left+p2.left+p3.left;
-                                    var info={
-                                        id:id, 
-                                        row:propindex, 
-                                        col:propcolumn, 
-                                        width:w, 
-                                        height:proprowh, 
-                                        left:l, 
-                                        top:proptop+p0.top+p1.top+p2.top+p3.top, 
-                                        type:t, 
-                                        value:__(propobj.matrix[propindex-1][id]),
-                                        editor:false
-                                    };
-                                    settings.edit(propobj, info);
-                                    if(info.editor){
-                                        // Metodi in uscita
-                                        info.back=function(v){
-                                            if(v==missing){
-                                                if(info.editor.type=="list")
-                                                    v=info.editor.key();
-                                                else
-                                                    v=info.editor.value();
-                                                if(v==null)
-                                                    v="";
-                                            }
-                                            propobj.cells(propindex, id, v);
-                                            propobj.refresh();
-                                            propobj.focus();
-                                        };
-                                        info.abandon=function(){
-                                            info.editor.visible(0);
-                                            propobj.focus();
-                                        };
-                                        // Posizionamento dell'editor
-                                        if(info.editor.type=="check")
-                                            info.left+=Math.floor(worig/2);
-                                        info.editor.move({"left":info.left, "top":info.top, "width":info.width});
-                                        // Valorizzazione dell'editor
-                                        if(info.editor.type=="list")
-                                            info.editor.setkey(info.value);
-                                        else
-                                            info.editor.value(info.value);
-                                        
-                                        // Eventuale disabilitazione dell'helper
-                                        //if(info.editor.type.match(/^(date|number|code)$/))
-                                        //    info.editor.helper(0);
-                                        
-                                        // Se l'editor è numerico, disabilito l'incremento mediante frecce
-                                        if(info.editor.type=="number")
-                                            info.editor.incremental(0);
-                                        // Show e focus
-                                        info.editor.visible(1);
-                                        RYBOX.setfocus(info.editor.name());
-                                    }
-                                }
+                                editmanagement();
                             }
                             else if(settings.enter!=missing){
                                 settings.enter(propobj, propindex);
@@ -375,9 +328,16 @@
                                 case 33:if(proppageon==0){proppageon=1}propobj.pageup(1);break;
                                 case 40:
                                     if(propshift){
-                                        selectrow(propindex, false);
-                                        propobj.rowdown();
-                                        selectrow(propindex, true);
+                                        if(propctrl){
+                                            selectrow(propindex, false, false);
+                                            propobj.rowdown();
+                                            selectrow(propindex, true, false);
+                                        }
+                                        else{
+                                            selectrow(propindex, false);
+                                            propobj.rowdown();
+                                            selectrow(propindex, true);
+                                        }
                                         return false;
                                     }
                                     else
@@ -385,9 +345,16 @@
                                     break;
                                 case 38:
                                     if(propshift){
-                                        selectrow(propindex, false);
-                                        propobj.rowup();
-                                        selectrow(propindex, true);
+                                        if(propctrl){
+                                            selectrow(propindex, false, false);
+                                            propobj.rowup();
+                                            selectrow(propindex, true, false);
+                                        }
+                                        else{
+                                            selectrow(propindex, false);
+                                            propobj.rowup();
+                                            selectrow(propindex, true);
+                                        }
                                         return false;
                                     }
                                     else
@@ -440,6 +407,40 @@
                         propobj.dataload();
                     }
                 );
+                
+                //attivo lo swipe    
+                /*
+                $("#"+propname).swipe( {
+                    swipeUp:function(event, direction, distance, duration) {
+                        // console.log("UP:You swiped " + direction)
+                        propobj.pagedown(1);
+                        propobj.dataload();
+                    },
+                    
+                    swipeDown:function(event, direction, distance, duration) {
+                        // console.log("DOWN:You swiped " + direction) 
+                        
+                        propobj.pageup(1);
+                        propobj.dataload();
+                    },
+                    swipeLeft:function(event, direction, distance, duration) {
+                        // console.log("Left:You swiped " + direction)
+                        scrollRight();
+                    },
+                    swipeRight:function(event, direction, distance, duration) {
+                        // console.log("Right:You swiped " + direction)
+                        
+                        scrollLeft();
+                    },
+                    click:function(event, target) { 
+                        
+                        
+                    },
+                    threshold:100,
+                    allowPageScroll:"vertical"
+                });
+                */
+                
                 $("#"+propname+"_vscroll").mousedown(
                     function(evt){
                         if(!propenabled){return}
@@ -709,14 +710,14 @@
                                 if(reff>propmouseprev){
                                     for(var m=propmouseprev; m<=reff; m++){
                                         propsuspendchange=true;
-                                        selectrow(m, true, !evt.shiftKey);
+                                        selectrow(m, true, !evt.ctrlKey);
                                     }
                                     propmouseprev=reff;
                                 }
                                 else if(reff<propmouseprev){
                                     for(var m=propmouseprev; m>=reff; m--){
                                         propsuspendchange=true;
-                                        selectrow(m, true, !evt.shiftKey);
+                                        selectrow(m, true, !evt.ctrlKey);
                                     }
                                     propmouseprev=reff;
                                 }
@@ -731,33 +732,40 @@
                 $("#"+propname).dblclick(
                     function(evt){
                         if(!propenabled){return}
-                        var tid=evt.target.id;
-                        var r,c;
-                        if(tid.indexOf("_tr")>0){
-                            r=parseInt(tid.replace(/^.*_tr(\d+)$/,"$1"));
-                            c=-1;
-                        }
-                        else if(tid.indexOf("_zr")>0){
-                            r=parseInt(tid.replace(/^.*_zr(\d+)$/,"$1"));
-                            c=0;
+                        if(propeditmode){
+                            editmanagement();
                         }
                         else{
-                            r=parseInt(tid.replace(/^.*_(\d+)_\d+$/,"$1"));
-                            c=parseInt(tid.replace(/^.*_\d+_(\d+)$/,"$1"));
-                            if(r<=propcount){
-                                if(settings.cellclick!=missing){
-                                    setTimeout(function(){settings.cellclick(propobj, r ,c)}, 50);
+                            var tid=evt.target.id;
+                            var r,c;
+                            if(tid.indexOf("_tr")>0){
+                                r=parseInt(tid.replace(/^.*_tr(\d+)$/,"$1"));
+                                c=-1;
+                            }
+                            else if(tid.indexOf("_zr")>0){
+                                r=parseInt(tid.replace(/^.*_zr(\d+)$/,"$1"));
+                                c=0;
+                            }
+                            else{
+                                r=parseInt(tid.replace(/^.*_(\d+)_\d+$/,"$1"));
+                                c=parseInt(tid.replace(/^.*_\d+_(\d+)$/,"$1"));
+                                if(r<=propcount){
+                                    if(settings.cellclick!=missing){
+                                        var reff=proptoprow+r-1; 
+                                        setTimeout(function(){settings.cellclick(propobj, reff ,c)}, 50);
+                                    }
                                 }
                             }
-                        }
-                        if(r>0 && ((c!=0 && propcheckable) || !propcheckable)){
-                            r=proptoprow+r-1;
-                            if(r<=propcount){
-                                // Gestione eventi e callback
-                                if(settings.enter!=missing){
-                                    setTimeout(function(){settings.enter(propobj,r)}, 200);
+                            if(r>0 && ((c!=0 && propcheckable) || !propcheckable)){
+                                r=proptoprow+r-1;
+                                if(r<=propcount){
+                                    // Gestione eventi e callback
+                                    if(settings.enter!=missing){
+                                        setTimeout(function(){settings.enter(propobj,r)}, 200);
+                                    }
                                 }
                             }
+                         
                         }
                     }
                 );
@@ -865,9 +873,9 @@
                                 fd="#"+propname+"_"+r+"_"+c;
                                 vl=v[r-1][propcols[c-1]];
                                 if(typeof vl!="string"){
-                                    vl="";
+                                    vl=$.actualString(vl);
                                 }
-                                else{
+                                //else{
                                     try{
                                         switch(proptyps[c-1]){
                                         case "?":
@@ -924,7 +932,7 @@
                                                     vl=vl.substr(1);
                                             }
                                             else{
-                                                vl=vl.replace(/<[bh]r\/?>/gi," ").replace(/ +$/, "");
+                                                vl=vl.replace(/<[bh]r\/?>/gi," ").replace(/<\/?p>/gi, " ").replace(/ +$/, "");
                                                 if(vl.length>20 && vl.substr(0,5)!="<img ")
                                                     $(fd).attr("title",vl);
                                                 else
@@ -935,7 +943,7 @@
                                     catch(e){
                                         vl=e.message;
                                     }
-                                }
+                                //}
                                 $(fd).html(vl);
                             }
                         }
@@ -1638,8 +1646,13 @@
             }
             this.sort=function(){
                 var args=[];
-                for(var a=0; a<arguments.length; a++)
-                    args[a]=arguments[a];
+				if(arguments[0] instanceof Array){
+					args=arguments[0];
+				}
+				else{
+					for(var a=0; a<arguments.length; a++)
+						args[a]=arguments[a];
+				}
                 sorting(args);
             }
             this.autofit=function(){
@@ -1734,6 +1747,14 @@
 					propeditmode=v.actualBoolean();
                 return propeditmode;
 			}
+            this.colwidth=function(c, v){
+                propdims[c-1]=v;
+                if(v>0){
+                    $("#"+propname+" .column_"+c).css({"position":"absolute","visibility":"visible"});
+                    $("#"+propname+"_sep"+c).css({"position":"absolute","visibility":"visible"});
+                }
+                fitcolumns();
+            }
             this.focus=function(){
                 if(RYBOX)
                     castFocus(propname);
@@ -1811,7 +1832,7 @@
                     .addClass("ryobject")
                     .addClass("ryque")
                     .width(propwidth)
-                    .height(proprowh*(proprows+1)+propscrollsize+2)
+                    .height(proprowh*(proprows+1)+propscrollsize+1)
                     .css({"position":"absolute","left":propleft,"top":proptop,"font-family":"verdana,sans-serif","font-size":"13px","overflow":"hidden"});
                     
                 $("#"+propname+" .column_0")
@@ -1993,12 +2014,11 @@
             }
             function addcolumn(params){
                 var l=propcols.length;
-                var colid="",tit="",dim=100,typ="",form="",code="";
+                var colid="",tit="",dim=100,typ="",code="";
                 if(params.id!=missing){colid=params.id}
                 if(params.caption!=missing){tit=params.caption}
                 if(params.width!=missing){dim=params.width}
                 if(params.type!=missing){typ=params.type}
-                if(params.formula!=missing){form=params.formula}
                 if(params.code!=missing)
                     code=params.code;
                 else if(propautocoding && tit!="")
@@ -2009,7 +2029,6 @@
                 proptits[l]=tit;
                 proptyps[l]=typ;
                 propdims[l]=dim;
-                propfrms[l]=form;
                 propcodes[l]=code;
                 return dim;
             }
@@ -2076,7 +2095,8 @@
                         else if(m>700 && cols.length>1)
                             m=700;
                         m+=8;
-                        propdims[c]=m;
+                        if(propdims[c]>0)
+                            propdims[c]=m;
                     }
                     fitcolumns();
                 }
@@ -2088,7 +2108,7 @@
                 try{
                     startloading();
                     if(propobj.matrix.length>0 && arguments.length>0){
-                        var args;
+                        var args=[];
                         var nams=[];
                         var cols=[];
                         var typs=[];    // 0 (string) - 1 (number) - 2 (boolean)
@@ -2155,7 +2175,7 @@
                                 if(cols[b]>0){
                                     vl=propobj.matrix[i][ nams[b] ];
                                     if(typeof vl!="string")
-                                        vl="";
+                                        vl=$.actualString(vl);
                                     switch(typs[b]){
                                     case 1:
                                         vl=parseFloat(vl);
@@ -2450,6 +2470,72 @@
                 if(cng){
                     $("#"+propname+"_grid").css({"left":-propleftcol});
                     propobj.hscrefresh();
+                }
+            }
+            function editmanagement(){
+                if(settings.edit!=missing){
+                    var p0=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).position();
+                    var p1=$( "#"+propname+"_tr"+(propindex-proptoprow+1) ).position();
+                    var p2=$( "#"+propname+"_grid" ).position();
+                    var p3=$( "#"+propname+"_outgrid" ).position();
+                    var id=propcols[propcolumn-1];
+                    var t=proptyps[propcolumn-1];
+                    var worig=$( "#"+propname+"_"+(propindex-proptoprow+1)+"_"+propcolumn ).width();
+                    var w=worig+12;
+                    var l=propleft+p0.left+p1.left+p2.left+p3.left;
+                    var info={
+                        id:id, 
+                        row:propindex, 
+                        col:propcolumn, 
+                        width:w, 
+                        height:proprowh, 
+                        left:l, 
+                        top:proptop+p0.top+p1.top+p2.top+p3.top, 
+                        type:t, 
+                        value:__(propobj.matrix[propindex-1][id]),
+                        editor:false
+                    };
+                    settings.edit(propobj, info);
+                    if(info.editor){
+                        // Metodi in uscita
+                        info.back=function(v){
+                            if(v==missing){
+                                if(info.editor.type=="list")
+                                    v=info.editor.key();
+                                else
+                                    v=info.editor.value();
+                                if(v==null)
+                                    v="";
+                            }
+                            propobj.cells(propindex, id, v);
+                            propobj.refresh();
+                            propobj.focus();
+                        };
+                        info.abandon=function(){
+                            info.editor.visible(0);
+                            propobj.focus();
+                        };
+                        // Posizionamento dell'editor
+                        if(info.editor.type=="check")
+                            info.left+=Math.floor(worig/2);
+                        info.editor.move({"left":info.left, "top":info.top, "width":info.width});
+                        // Valorizzazione dell'editor
+                        if(info.editor.type=="list")
+                            info.editor.setkey(info.value);
+                        else
+                            info.editor.value(info.value);
+                        
+                        // Eventuale disabilitazione dell'helper
+                        //if(info.editor.type.match(/^(date|number|code)$/))
+                        //    info.editor.helper(0);
+                        
+                        // Se l'editor è numerico, disabilito l'incremento mediante frecce
+                        if(info.editor.type=="number")
+                            info.editor.incremental(0);
+                        // Show e focus
+                        info.editor.visible(1);
+                        RYBOX.setfocus(info.editor.name());
+                    }
                 }
             }
 			return this;
